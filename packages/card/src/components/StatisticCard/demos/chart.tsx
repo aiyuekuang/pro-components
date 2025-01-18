@@ -1,12 +1,11 @@
-import React from 'react';
 import { EllipsisOutlined } from '@ant-design/icons';
-import { StatisticCard } from '@ant-design/pro-card';
+import { StatisticCard } from '@ant-design/pro-components';
 
 export default () => {
   return (
     <StatisticCard
       title="大盘趋势"
-      tip="大盘说明"
+      tooltip="大盘说明"
       style={{ maxWidth: 480 }}
       extra={<EllipsisOutlined />}
       chart={

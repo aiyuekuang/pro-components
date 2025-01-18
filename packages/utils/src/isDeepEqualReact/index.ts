@@ -6,7 +6,12 @@
 /* eslint-disable no-plusplus */
 // do not edit .js files directly - edit src/index.jst
 
-function isDeepEqualReact(a: any, b: any) {
+export function isDeepEqualReact(
+  a: any,
+  b: any,
+  ignoreKeys?: string[],
+  debug?: boolean,
+) {
   if (a === b) return true;
 
   if (a && b && typeof a === 'object' && typeof b === 'object') {
@@ -18,14 +23,17 @@ function isDeepEqualReact(a: any, b: any) {
     if (Array.isArray(a)) {
       length = a.length;
       if (length != b.length) return false;
-      for (i = length; i-- !== 0; ) if (!isDeepEqualReact(a[i], b[i])) return false;
+      for (i = length; i-- !== 0; )
+        if (!isDeepEqualReact(a[i], b[i], ignoreKeys, debug)) return false;
       return true;
     }
 
     if (a instanceof Map && b instanceof Map) {
       if (a.size !== b.size) return false;
       for (i of a.entries()) if (!b.has(i[0])) return false;
-      for (i of a.entries()) if (!isDeepEqualReact(i[1], b.get(i[0]))) return false;
+      for (i of a.entries())
+        if (!isDeepEqualReact(i[1], b.get(i[0]), ignoreKeys, debug))
+          return false;
       return true;
     }
 
@@ -40,13 +48,17 @@ function isDeepEqualReact(a: any, b: any) {
       length = a.length;
       // @ts-ignore
       if (length != b.length) return false;
+      // @ts-ignore
       for (i = length; i-- !== 0; ) if (a[i] !== b[i]) return false;
       return true;
     }
 
-    if (a.constructor === RegExp) return a.source === b.source && a.flags === b.flags;
-    if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
-    if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
+    if (a.constructor === RegExp)
+      return a.source === b.source && a.flags === b.flags;
+    if (a.valueOf !== Object.prototype.valueOf && a.valueOf)
+      return a.valueOf() === b.valueOf();
+    if (a.toString !== Object.prototype.toString && a.toString)
+      return a.toString() === b.toString();
 
     // eslint-disable-next-line prefer-const
     keys = Object.keys(a);
@@ -59,6 +71,8 @@ function isDeepEqualReact(a: any, b: any) {
     for (i = length; i-- !== 0; ) {
       const key = keys[i];
 
+      if (ignoreKeys?.includes(key)) continue;
+
       if (key === '_owner' && a.$$typeof) {
         // React-specific: avoid traversing React elements' _owner.
         //  _owner contains circular references
@@ -66,7 +80,12 @@ function isDeepEqualReact(a: any, b: any) {
         continue;
       }
 
-      if (!isDeepEqualReact(a[key], b[key])) return false;
+      if (!isDeepEqualReact(a[key], b[key], ignoreKeys, debug)) {
+        if (debug) {
+          console.log(key);
+        }
+        return false;
+      }
     }
 
     return true;
@@ -75,5 +94,3 @@ function isDeepEqualReact(a: any, b: any) {
   // true if both NaN, false otherwise
   return a !== a && b !== b;
 }
-
-export default isDeepEqualReact;

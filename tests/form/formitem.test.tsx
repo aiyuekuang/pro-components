@@ -1,15 +1,15 @@
-import React from 'react';
 import ProForm, { ProFormText } from '@ant-design/pro-form';
-import { act } from 'react-dom/test-utils';
-
-import { mount } from 'enzyme';
-import { waitForComponentToPaint } from '../util';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { Input } from 'antd';
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('ProForm.Item', () => {
   it('📦 ProForm support fieldProps.onBlur', async () => {
-    const onBlur = jest.fn();
-    const wrapper = mount<{ navTheme: string }>(
+    const onBlur = vi.fn();
+    const { container } = render(
       <ProForm
         initialValues={{
           navTheme: 'dark',
@@ -24,23 +24,18 @@ describe('ProForm.Item', () => {
         />
       </ProForm>,
     );
-    await waitForComponentToPaint(wrapper);
-    act(() => {
-      wrapper.find('input#navTheme').simulate('focus');
-    });
-    await waitForComponentToPaint(wrapper);
-    act(() => {
-      wrapper.find('input#navTheme').simulate('blur');
-    });
 
-    expect(onBlur).toBeCalledWith('dark');
+    fireEvent.focus(container.querySelector('input#navTheme')!);
+    fireEvent.blur(container.querySelector('input#navTheme')!);
+
+    expect(onBlur).toHaveBeenCalledWith('dark');
     expect(onBlur).toBeCalledTimes(1);
   });
 
   it('📦 ProForm.Item supports onChange', async () => {
-    const onChange = jest.fn();
-    const onValuesChange = jest.fn();
-    const wrapper = mount<{ navTheme: string }>(
+    const onChange = vi.fn();
+    const onValuesChange = vi.fn();
+    const { container } = render(
       <ProForm
         initialValues={{
           navTheme: 'dark',
@@ -52,19 +47,16 @@ describe('ProForm.Item', () => {
         </ProForm.Item>
       </ProForm>,
     );
-    await waitForComponentToPaint(wrapper);
 
-    act(() => {
-      wrapper.find('input#name').simulate('change', {
-        target: {
-          value: '1212',
-        },
-      });
+    fireEvent.change(container.querySelector('input#name')!, {
+      target: {
+        value: '1212',
+      },
     });
 
-    expect(onChange).toBeCalledWith('1212');
+    expect(onChange).toHaveBeenCalledWith('1212');
     expect(onChange).toBeCalledTimes(1);
-    expect(onValuesChange).toBeCalledWith('1212');
+    expect(onValuesChange).toHaveBeenCalledWith('1212');
     expect(onValuesChange).toBeCalledTimes(1);
   });
 });

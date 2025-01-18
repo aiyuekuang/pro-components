@@ -1,6 +1,6 @@
 {
   "name": "@ant-design/pro-descriptions",
-  "version": "1.10.5",
+  "version": "2.6.4",
   "description": "@ant-design/pro-descriptions",
   "keywords": [
     "antd",
@@ -12,20 +12,21 @@
   "bugs": "http://github.com/umijs/plugins/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ant-design/pro-components"
+    "url": "git+https://github.com/ant-design/pro-components.git"
   },
   "license": "MIT",
-  "sideEffects": [
-    "*.less"
-  ],
+  "sideEffects": false,
   "main": "lib/index.js",
   "module": "es/index.js",
-  "types": "lib/index.d.ts",
+  "types": "es/index.d.ts",
   "files": [
-    "lib",
     "es",
-    "dist"
+    "dist",
+    "lib"
   ],
+  "scripts": {
+    "build": "father build"
+  },
   "browserslist": [
     "last 2 versions",
     "Firefox ESR",
@@ -33,17 +34,21 @@
     "ie >= 11"
   ],
   "dependencies": {
-    "@ant-design/pro-field": "1.27.1",
-    "@ant-design/pro-form": "1.49.3",
-    "@ant-design/pro-skeleton": "1.0.2",
-    "@ant-design/pro-utils": "1.28.4",
-    "@babel/runtime": "^7.16.3",
-    "rc-util": "^5.0.6",
-    "use-json-comparison": "^1.0.5"
+    "@ant-design/pro-field": "3.0.1",
+    "@ant-design/pro-form": "2.31.4",
+    "@ant-design/pro-provider": "2.15.3",
+    "@ant-design/pro-skeleton": "2.2.1",
+    "@ant-design/pro-utils": "2.16.3",
+    "@babel/runtime": "^7.18.0",
+    "rc-resize-observer": "^0.2.3",
+    "rc-util": "^5.0.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
   },
   "peerDependencies": {
-    "antd": "4.x",
-    "react": ">=16.9.0"
+    "antd": "^4.24.15 || ^5.11.2",
+    "react": ">=17.0.0"
   },
   "publishConfig": {
     "access": "public"

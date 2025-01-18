@@ -1,24 +1,30 @@
-import ProCard from './ProCard';
-import type { ProCardProps } from './ProCard';
-import StatisticCard from './components/StatisticCard';
-import CheckCard from './components/CheckCard';
-import Statistic from './components/Statistic';
-
-import type { ProCardTabsProps } from './type';
-import type { StatisticCardProps, StatisticsCardProps } from './components/StatisticCard';
-import type { CheckCardGroupProps, CheckCardProps } from './components/CheckCard';
-import type { StatisticProps } from './components/Statistic';
-
-export type {
-  ProCardTabsProps,
-  ProCardProps,
-  StatisticCardProps,
-  StatisticsCardProps,
+import type {
   CheckCardGroupProps,
   CheckCardProps,
-  StatisticProps,
-};
+} from './components/CheckCard';
+import CheckCard from './components/CheckCard';
+import type { StatisticProps } from './components/Statistic';
+import Statistic from './components/Statistic';
+import type {
+  StatisticCardProps,
+  StatisticsCardProps,
+} from './components/StatisticCard';
+import StatisticCard from './components/StatisticCard';
+import type { ProCardProps } from './ProCard';
+import ProCard from './ProCard';
+import type { ProCardTabsProps } from './typing';
 
-export { StatisticCard, Statistic, CheckCard };
+import 'antd/lib/card/style';
+
+export { CheckCard, ProCard, Statistic, StatisticCard };
+export type {
+  CheckCardGroupProps,
+  CheckCardProps,
+  ProCardProps,
+  ProCardTabsProps,
+  StatisticCardProps,
+  StatisticProps,
+  StatisticsCardProps,
+};
 
 export default ProCard;

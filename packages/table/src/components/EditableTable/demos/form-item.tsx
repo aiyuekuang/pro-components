@@ -1,17 +1,27 @@
-﻿import React, { useRef, useState } from 'react';
-import type { ProColumns } from '@ant-design/pro-table';
-import { EditableProTable } from '@ant-design/pro-table';
-import type { ProFormInstance } from '@ant-design/pro-form';
-import ProForm, { ProFormRadio, ProFormField, ProFormDependency } from '@ant-design/pro-form';
-import ProCard from '@ant-design/pro-card';
+﻿import type {
+  EditableFormInstance,
+  ProColumns,
+  ProFormInstance,
+} from '@ant-design/pro-components';
+import {
+  EditableProTable,
+  ProCard,
+  ProForm,
+  ProFormDependency,
+  ProFormField,
+  ProFormSegmented,
+  ProFormSwitch,
+} from '@ant-design/pro-components';
+import { Button } from 'antd';
+import React, { useRef, useState } from 'react';
 
 type DataSourceType = {
   id: React.Key;
   title?: string;
   decs?: string;
   state?: string;
-  created_at?: string;
-  update_at?: string;
+  created_at?: number;
+  update_at?: number;
   children?: DataSourceType[];
 };
 
@@ -21,23 +31,29 @@ const defaultData: DataSourceType[] = [
     title: '活动名称一',
     decs: '这个活动真好玩',
     state: 'open',
-    created_at: '2020-05-26T09:42:56Z',
-    update_at: '2020-05-26T09:42:56Z',
+    created_at: 1590486176000,
+    update_at: 1590486176000,
   },
   {
     id: '624691229',
     title: '活动名称二',
     decs: '这个活动真好玩',
     state: 'closed',
-    created_at: '2020-05-26T08:19:22Z',
-    update_at: '2020-05-26T08:19:22Z',
+    created_at: 1590481162000,
+    update_at: 1590481162000,
   },
 ];
 
+let i = 0;
+
 export default () => {
   const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() => []);
-  const [position, setPosition] = useState<'top' | 'bottom' | 'hidden'>('bottom');
+  const [position, setPosition] = useState<'top' | 'bottom' | 'hidden'>(
+    'bottom',
+  );
+  const [controlled, setControlled] = useState<boolean>(false);
   const formRef = useRef<ProFormInstance<any>>();
+  const editorFormRef = useRef<EditableFormInstance<DataSourceType>>();
   const columns: ProColumns<DataSourceType>[] = [
     {
       title: '活动名称',
@@ -83,7 +99,7 @@ export default () => {
         <a
           key="editable"
           onClick={() => {
-            action?.startEditable?.(record.id);
+            action?.startEditable?.(record.id, record);
           }}
         >
           编辑
@@ -91,7 +107,9 @@ export default () => {
         <a
           key="delete"
           onClick={() => {
-            const tableDataSource = formRef.current?.getFieldValue('table') as DataSourceType[];
+            const tableDataSource = formRef.current?.getFieldValue(
+              'table',
+            ) as DataSourceType[];
             formRef.current?.setFieldsValue({
               table: tableDataSource.filter((item) => item.id !== record.id),
             });
@@ -111,12 +129,18 @@ export default () => {
       initialValues={{
         table: defaultData,
       }}
+      validateTrigger="onBlur"
     >
       <EditableProTable<DataSourceType>
         rowKey="id"
+        scroll={{
+          x: 960,
+        }}
+        editableFormRef={editorFormRef}
         headerTitle="可编辑表格"
         maxLength={5}
         name="table"
+        controlled={controlled}
         recordCreatorProps={
           position !== 'hidden'
             ? {
@@ -126,13 +150,34 @@ export default () => {
             : false
         }
         toolBarRender={() => [
-          <ProFormRadio.Group
+          <ProFormSwitch
             key="render"
             fieldProps={{
-              value: position,
-              onChange: (e) => setPosition(e.target.value),
+              style: {
+                marginBlockEnd: 0,
+              },
+              checked: controlled,
+              onChange: (value) => {
+                setControlled(value);
+              },
             }}
-            options={[
+            checkedChildren="数据更新通知 Form"
+            unCheckedChildren="保存后通知 Form"
+            noStyle
+          />,
+          <ProFormSegmented
+            key="render"
+            fieldProps={{
+              style: {
+                marginBlockEnd: 0,
+              },
+              value: position,
+              onChange: (value) => {
+                setPosition(value as 'top');
+              },
+            }}
+            noStyle
+            request={async () => [
               {
                 label: '添加到顶部',
                 value: 'top',
@@ -147,12 +192,40 @@ export default () => {
               },
             ]}
           />,
+          <Button
+            key="rows"
+            onClick={() => {
+              const rows = editorFormRef.current?.getRowsData?.();
+              console.log(rows);
+            }}
+          >
+            获取 table 的数据
+          </Button>,
         ]}
         columns={columns}
         editable={{
           type: 'multiple',
           editableKeys,
           onChange: setEditableRowKeys,
+          actionRender: (row, config, defaultDom) => {
+            return [
+              defaultDom.save,
+              defaultDom.delete,
+              defaultDom.cancel,
+              <a
+                key="set"
+                onClick={() => {
+                  console.log(config.index);
+                  i++;
+                  editorFormRef.current?.setRowData?.(config.index!, {
+                    title: '动态设置的title' + i,
+                  });
+                }}
+              >
+                动态设置此项
+              </a>,
+            ];
+          },
         }}
       />
       <ProForm.Item>

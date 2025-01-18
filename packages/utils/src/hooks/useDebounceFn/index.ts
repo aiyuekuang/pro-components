@@ -1,69 +1,47 @@
-import type { DependencyList } from 'react';
-import { useEffect, useRef, useCallback } from 'react';
-
-export type ReturnValue<T extends any[], U = any> = {
-  run: (...args: T) => Promise<U>;
-  cancel: () => void;
-};
-const useUpdateEffect: typeof useEffect = (effect, deps) => {
-  const isMounted = useRef(false);
-
-  useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true;
-    } else {
-      return effect();
-    }
-    return () => undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-};
-
-function useDebounceFn<T extends any[], U = any>(
+import { useCallback, useEffect, useRef } from 'react';
+import { useRefFunction } from '../useRefFunction';
+/**
+ * 一个去抖的 hook，传入一个 function，返回一个去抖后的 function
+ * @param  {(...args:T) => Promise<any>} fn
+ * @param  {number} wait?
+ */
+export function useDebounceFn<T extends any[], U = any>(
   fn: (...args: T) => Promise<any>,
-  deps: DependencyList | number,
   wait?: number,
-): ReturnValue<T, U> {
-  // eslint-disable-next-line no-underscore-dangle
-  const hooksDeps: DependencyList = (Array.isArray(deps) ? deps : []) as DependencyList;
-  // eslint-disable-next-line no-underscore-dangle
-  const hookWait: number = typeof deps === 'number' ? deps : wait || 0;
-  const timer = useRef<any>();
+) {
+  const callback = useRefFunction(fn);
 
-  const fnRef = useRef<any>(fn);
-  fnRef.current = fn;
+  const timer = useRef<any>();
 
   const cancel = useCallback(() => {
     if (timer.current) {
       clearTimeout(timer.current);
+      timer.current = null;
     }
   }, []);
 
   const run = useCallback(
-    async (...args: any): Promise<U> => {
+    async (...args: any): Promise<U | undefined> => {
+      if (wait === 0 || wait === undefined) {
+        return callback(...args);
+      }
+      cancel();
       return new Promise<U>((resolve) => {
-        cancel();
         timer.current = setTimeout(async () => {
-          const data = await fnRef.current(...args);
-          resolve(data);
-        }, hookWait);
+          resolve(await callback(...args));
+          return;
+        }, wait);
       });
     },
-    [hookWait, cancel],
+    [callback, cancel, wait],
   );
 
-  useUpdateEffect(() => {
-    run();
+  useEffect(() => {
     return cancel;
-  }, [...hooksDeps, run]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => cancel, []);
+  }, [cancel]);
 
   return {
     run,
     cancel,
   };
 }
-
-export default useDebounceFn;

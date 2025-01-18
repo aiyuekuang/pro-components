@@ -1,17 +1,3 @@
-import React, { useState } from 'react';
-import { Button, message, Space } from 'antd';
-import ProForm, {
-  ModalForm,
-  DrawerForm,
-  QueryFilter,
-  LightFilter,
-  StepsForm,
-  ProFormText,
-  ProFormDateRangePicker,
-  ProFormSelect,
-  ProFormRadio,
-  LoginForm,
-} from '@ant-design/pro-form';
 import {
   AlipayCircleOutlined,
   LockOutlined,
@@ -20,9 +6,24 @@ import {
   UserOutlined,
   WeiboCircleOutlined,
 } from '@ant-design/icons';
+import {
+  DrawerForm,
+  LightFilter,
+  LoginForm,
+  ModalForm,
+  ProForm,
+  ProFormDateRangePicker,
+  ProFormRadio,
+  ProFormSelect,
+  ProFormText,
+  QueryFilter,
+  StepsForm,
+} from '@ant-design/pro-components';
+import { Button, Space, message } from 'antd';
+import { useState } from 'react';
 
 const iconStyles = {
-  marginLeft: '16px',
+  marginInlineStart: '16px',
   color: 'rgba(0, 0, 0, 0.2)',
   fontSize: '24px',
   verticalAlign: 'middle',
@@ -38,7 +39,6 @@ const waitTime = (time: number = 100) => {
 };
 
 export default () => {
-  const [type, setType] = useState('ProForm');
   const Components = {
     ProForm,
     ModalForm,
@@ -48,6 +48,7 @@ export default () => {
     StepsForm,
     LoginForm,
   };
+  const [type, setType] = useState<keyof typeof Components>('ProForm');
 
   if (type === 'StepsForm') {
     return (
@@ -157,52 +158,72 @@ export default () => {
     );
   }
 
-  const FormComponents = Components[type];
+  const FormComponents = Components[type as 'LoginForm'];
 
   if (type === 'LoginForm') {
     return (
-      <FormComponents
-        title="Github"
-        subTitle="全球最大同性交友网站"
-        actions={
-          <Space>
-            其他登录方式
-            <AlipayCircleOutlined style={iconStyles} />
-            <TaobaoCircleOutlined style={iconStyles} />
-            <WeiboCircleOutlined style={iconStyles} />
-          </Space>
-        }
-      >
-        {' '}
-        <ProFormText
-          name="username"
-          fieldProps={{
-            size: 'large',
-            prefix: <UserOutlined className={'prefixIcon'} />,
+      <>
+        <ProFormRadio.Group
+          style={{
+            margin: 16,
           }}
-          placeholder={'用户名: admin or user'}
-          rules={[
-            {
-              required: true,
-              message: '请输入用户名!',
-            },
+          radioType="button"
+          fieldProps={{
+            value: type,
+            onChange: (e) => setType(e.target.value),
+          }}
+          options={[
+            'LightFilter',
+            'ProForm',
+            'ModalForm',
+            'DrawerForm',
+            'QueryFilter',
+            'StepsForm',
+            'LoginForm',
           ]}
         />
-        <ProFormText.Password
-          name="password"
-          fieldProps={{
-            size: 'large',
-            prefix: <LockOutlined className={'prefixIcon'} />,
-          }}
-          placeholder={'密码: ant.design'}
-          rules={[
-            {
-              required: true,
-              message: '请输入密码！',
-            },
-          ]}
-        />
-      </FormComponents>
+        <FormComponents
+          title="Github"
+          subTitle="全球最大的代码托管平台"
+          actions={
+            <Space>
+              其他登录方式
+              <AlipayCircleOutlined style={iconStyles} />
+              <TaobaoCircleOutlined style={iconStyles} />
+              <WeiboCircleOutlined style={iconStyles} />
+            </Space>
+          }
+        >
+          <ProFormText
+            name="username"
+            fieldProps={{
+              size: 'large',
+              prefix: <UserOutlined className={'prefixIcon'} />,
+            }}
+            placeholder={'用户名: admin or user'}
+            rules={[
+              {
+                required: true,
+                message: '请输入用户名!',
+              },
+            ]}
+          />
+          <ProFormText.Password
+            name="password"
+            fieldProps={{
+              size: 'large',
+              prefix: <LockOutlined className={'prefixIcon'} />,
+            }}
+            placeholder={'密码: ant.design'}
+            rules={[
+              {
+                required: true,
+                message: '请输入密码！',
+              },
+            ]}
+          />
+        </FormComponents>
+      </>
     );
   }
 
@@ -233,6 +254,7 @@ export default () => {
         }}
       >
         <FormComponents
+          // @ts-ignore
           labelWidth="auto"
           trigger={
             <Button type="primary">
@@ -258,7 +280,12 @@ export default () => {
               tooltip="最长为 24 位"
               placeholder="请输入名称"
             />
-            <ProFormText width="md" name="company" label="我方公司名称" placeholder="请输入名称" />
+            <ProFormText
+              width="md"
+              name="company"
+              label="我方公司名称"
+              placeholder="请输入名称"
+            />
           </ProForm.Group>
           <ProForm.Group>
             <ProFormText
@@ -306,7 +333,13 @@ export default () => {
             label="项目名称"
             initialValue="xxxx项目"
           />
-          <ProFormText width="xs" name="mangerName" disabled label="商务经理" initialValue="启途" />
+          <ProFormText
+            width="xs"
+            name="mangerName"
+            disabled
+            label="商务经理"
+            initialValue="启途"
+          />
         </FormComponents>
       </div>
     </>

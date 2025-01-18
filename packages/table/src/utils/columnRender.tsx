@@ -1,20 +1,18 @@
-﻿import React from 'react';
-import { Space, Form } from 'antd';
+﻿import type { ProFieldEmptyText } from '@ant-design/pro-field';
 import type {
   ProFieldValueType,
   ProSchemaComponentTypes,
   ProTableEditableFnType,
   UseEditableUtilType,
 } from '@ant-design/pro-utils';
-import { isNil, genCopyable, isDeepEqualReact } from '@ant-design/pro-utils';
-import type { ProFieldEmptyText } from '@ant-design/pro-field';
-import cellRenderToFromItem from './cellRenderToFromItem';
-import { LabelIconTip } from '@ant-design/pro-utils';
+import { LabelIconTip, genCopyable, isNil } from '@ant-design/pro-utils';
+import { AnyObject } from 'antd/es/_util/type';
 import get from 'rc-util/lib/utils/get';
-
-import type { ActionType, ProColumns } from '../typing';
-import type { useContainer } from '../container';
+import React from 'react';
 import { isMergeCell } from '.';
+import type { ContainerType } from '../Store/Provide';
+import type { ActionType, ProColumns } from '../typing';
+import cellRenderToFromItem from './cellRenderToFromItem';
 
 /** 转化列的定义 */
 type ColumnRenderInterface<T> = {
@@ -24,8 +22,10 @@ type ColumnRenderInterface<T> = {
   index: number;
   columnEmptyText?: ProFieldEmptyText;
   type: ProSchemaComponentTypes;
-  counter: ReturnType<typeof useContainer>;
+  counter: ReturnType<ContainerType>;
   editableUtils: UseEditableUtilType;
+  subName: string[];
+  marginSM?: number;
 };
 
 /**
@@ -35,14 +35,30 @@ type ColumnRenderInterface<T> = {
  */
 export const renderColumnsTitle = (item: ProColumns<any>) => {
   const { title } = item;
+  const ellipsis =
+    typeof item?.ellipsis === 'boolean'
+      ? item?.ellipsis
+      : item?.ellipsis?.showTitle;
   if (title && typeof title === 'function') {
-    return title(item, 'table', <LabelIconTip label={title} tooltip={item.tooltip || item.tip} />);
+    return title(
+      item,
+      'table',
+      //@ts-expect-error
+      <LabelIconTip label={null} tooltip={item.tooltip || item.tip} />,
+    );
   }
-  return <LabelIconTip label={title} tooltip={item.tooltip || item.tip} ellipsis={item.ellipsis} />;
+  return (
+    <LabelIconTip
+      label={title}
+      //@ts-expect-error
+      tooltip={item.tooltip || item.tip}
+      ellipsis={ellipsis}
+    />
+  );
 };
 
-/** 判断可不可编辑 */
-function isEditableCell<T>(
+/** 判断是否为不可编辑的单元格 */
+function isNotEditableCell<T>(
   text: any,
   rowData: T,
   index: number,
@@ -62,7 +78,11 @@ function isEditableCell<T>(
  * @param dataIndex
  * @returns
  */
-export const defaultOnFilter = (value: string, record: any, dataIndex: string | string[]) => {
+export const defaultOnFilter = (
+  value: string,
+  record: any,
+  dataIndex: string | string[],
+) => {
   const recordElement = Array.isArray(dataIndex)
     ? get(record, dataIndex as string[])
     : record[dataIndex];
@@ -76,7 +96,7 @@ export const defaultOnFilter = (value: string, record: any, dataIndex: string | 
  *
  * @param param0
  */
-export function columnRender<T>({
+export function columnRender<T extends AnyObject>({
   columnProps,
   text,
   rowData,
@@ -84,21 +104,30 @@ export function columnRender<T>({
   columnEmptyText,
   counter,
   type,
+  subName,
+  marginSM,
   editableUtils,
 }: ColumnRenderInterface<T>): any {
   const { action, prefixName } = counter;
-  const { isEditable, recordKey } = editableUtils.isEditable({ ...rowData, index });
+  const { isEditable, recordKey } = editableUtils.isEditable({
+    ...rowData,
+    index,
+  });
   const { renderText = (val: any) => val } = columnProps;
 
   const renderTextStr = renderText(text, rowData, index, action as ActionType);
   const mode =
-    isEditable && !isEditableCell(text, rowData, index, columnProps?.editable) ? 'edit' : 'read';
+    isEditable &&
+    !isNotEditableCell(text, rowData, index, columnProps?.editable)
+      ? 'edit'
+      : 'read';
 
   const textDom = cellRenderToFromItem<T>({
     text: renderTextStr,
     valueType: (columnProps.valueType as ProFieldValueType) || 'text',
     index,
     rowData,
+    subName,
     columnProps: {
       ...columnProps,
       // 为了兼容性，原来写了个错别字
@@ -112,33 +141,32 @@ export function columnRender<T>({
     recordKey,
     mode,
     prefixName,
+    editableUtils,
   });
 
   const dom: React.ReactNode =
-    mode === 'edit' ? textDom : genCopyable(textDom, columnProps, renderTextStr);
+    mode === 'edit'
+      ? textDom
+      : genCopyable(textDom, columnProps, renderTextStr);
 
   /** 如果是编辑模式，并且 renderFormItem 存在直接走 renderFormItem */
   if (mode === 'edit') {
     if (columnProps.valueType === 'option') {
       return (
-        <Form.Item
-          shouldUpdate={(prevValues, nextValues) => {
-            return !isDeepEqualReact(get(prevValues, [recordKey]), get(nextValues, [recordKey]));
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: marginSM,
+            justifyContent:
+              columnProps.align === 'center' ? 'center' : 'flex-start',
           }}
-          noStyle
         >
-          {(form: any) => (
-            <Space size={16}>
-              {editableUtils.actionRender(
-                {
-                  ...rowData,
-                  index: columnProps.index || index,
-                },
-                form,
-              )}
-            </Space>
-          )}
-        </Form.Item>
+          {editableUtils.actionRender({
+            ...rowData,
+            index: columnProps.index || index,
+          })}
+        </div>
       );
     }
     return dom;
@@ -170,8 +198,23 @@ export function columnRender<T>({
     return renderDom;
   }
 
-  if (renderDom && columnProps.valueType === 'option' && Array.isArray(renderDom)) {
-    return <Space size={16}>{renderDom}</Space>;
+  if (
+    renderDom &&
+    columnProps.valueType === 'option' &&
+    Array.isArray(renderDom)
+  ) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          gap: 8,
+        }}
+      >
+        {renderDom}
+      </div>
+    );
   }
   return renderDom as React.ReactNode;
 }
